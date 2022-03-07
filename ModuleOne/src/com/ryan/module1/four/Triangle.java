@@ -21,6 +21,7 @@ public class Triangle extends TwoDShape implements Rotate {
     private double heronsHeight() {
         /**@return height of triangle*/
         if (side1 == 0 || side2 == 0 || side3 == 0) {
+            System.out.println("0 exist");
             return 0;
         } else {
             double s = (side1 + side2 + side3) / 2;
