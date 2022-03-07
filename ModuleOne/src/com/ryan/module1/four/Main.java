@@ -12,7 +12,6 @@ public class Main {
             System.out.println(t.toString());
             Circle c = new Circle(a[i]);
             System.out.println(c.toString());
-            System.out.println("");
         }
     }
 }
