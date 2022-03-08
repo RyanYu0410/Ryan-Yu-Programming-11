@@ -1,3 +1,13 @@
 public enum Suit {
-     Spade,Heart,Club,Diamond
+     Spade("Spade"),Heart("Heart"),Club("Club"), Diamond("Diamond");
+
+     final String name;
+
+      Suit(String name) {
+           this.name = name;
+      }
+
+     public String getName(Suit suit) {
+          return name;
+     }
 }
