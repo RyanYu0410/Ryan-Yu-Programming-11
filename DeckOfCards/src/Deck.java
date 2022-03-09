@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Objects;
 
@@ -5,6 +6,8 @@ public class Deck {
     LinkedList<String> deck = new LinkedList<String>();
     LinkedList<String> originalDeck = new LinkedList<String>();
     LinkedList<String> sortedDeck = new LinkedList<String>();
+    LinkedList<String> hand = new LinkedList<String>();
+
 
     public Deck() {
         NumberCards nc = new NumberCards();
@@ -15,6 +18,18 @@ public class Deck {
                 this.deck.add(nc.numberCards.get(i) + suits);
             }for (int i = 0; i < fc.getFaceCards().size(); i++) {
                 this.deck.add(fc.faceCards.get(i) +suits);
+            }
+        }
+        setOriginalDeck();
+        Collections.shuffle(deck);
+    }
+
+    public void setSortedDeck (LinkedList<String> sortedDeck) {
+        for (String origin : originalDeck) {
+            for (String card : deck) {
+                if (card.equals(origin)) {
+                    this.sortedDeck.add(card);
+                }
             }
         }
     }
@@ -32,6 +47,13 @@ public class Deck {
         }
     }
 
+    public void setHand() {
+        this.hand = new LinkedList<String>();
+        for (int i = 0; i < 14; i++) {
+            this.hand.add(deck.get(i));
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -45,13 +67,11 @@ public class Deck {
         return Objects.hash(deck);
     }
 
-    public void setSortedDeck (LinkedList<String> sortedDeck) {
-        for (String origin : originalDeck) {
-            for (String card : deck) {
-                if (card.equals(origin)) {
-                    this.sortedDeck.add(card);
-                }
-            }
+    public void printList(LinkedList<String> list) {
+        int count = 1;
+        for (String card : list) {
+            System.out.println(count + ": " + card);
+            count++;
         }
     }
 }
