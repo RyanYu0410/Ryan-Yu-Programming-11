@@ -20,9 +20,7 @@ public abstract class TwoDShape{
         width = 0;
     }
 
-    public double getArea() {
-        return width * height;
-    }
+    abstract double getArea();
 
     public abstract void setHeight(double height);
 

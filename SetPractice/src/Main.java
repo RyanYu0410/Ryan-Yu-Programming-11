@@ -13,5 +13,8 @@ public class Main {
         }
         uniqueWord.remove("");
         System.out.println(uniqueWord.size());
+        for (String str : uniqueWord) {
+            System.out.println(str);
+        }
     }
 }

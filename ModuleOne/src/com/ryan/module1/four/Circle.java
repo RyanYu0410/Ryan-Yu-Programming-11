@@ -10,10 +10,11 @@ public class Circle extends TwoDShape {
         this.radius = radius;
     }
 
+    @Override
     public double getArea() {
-        /** PI value is 3.14*/return radius * radius * PI;
+/** PI value is 3.14*/
+        return radius * radius * PI;
     }
-
     @Override
     public void setHeight(double height) {
         this.height = height;
@@ -26,6 +27,7 @@ public class Circle extends TwoDShape {
 
     public String toString() {
         /**@return String of   */
-        return "The area of the circle is " + getArea() + " and the radius is " + radius;
+        String s = "The area of the circle is " + getArea() + " and the radius is " + radius;
+        return s;
     }
 }
