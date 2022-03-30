@@ -41,7 +41,8 @@ public class Student {
 
 //    Will print student's name and grade
     public String printStudent() {
-        return "Name=" + firstName + lastName + '\'' +
-                ", grade= " + grade;
+        return "Name=" + firstName + lastName +
+                ", grade= " + grade +
+                    ", student number= " + studentNumber;
     }
 }
