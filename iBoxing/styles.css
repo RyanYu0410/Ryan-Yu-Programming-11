@@ -1,0 +1,204 @@
+body {
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 0;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.navbar .logo h1 {
+    margin: 0;
+}
+
+.navbar .logo a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.navbar nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.navbar nav ul li {
+    margin-left: 20px;
+}
+
+.navbar nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.navbar nav ul li a:hover {
+    text-decoration: underline;
+}
+
+.main {
+    padding: 20px;
+    flex: 1; /* Added to ensure main content takes up available space */
+}
+
+.hero-content {
+    text-align: center;
+    padding: 100px 20px; /* Increased padding to move the picture down */
+    background: url('hero-bg.jpg') no-repeat center center/cover;
+    color: #fff;
+    position: relative;
+    top: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3)), url('hero-bg.jpg') no-repeat center center/cover; /* Added dark mask */
+}
+
+.hero-content h2 {
+    font-size: 3em;
+    display: inline-block;
+    padding: 10px;
+    position: relative;
+    top: 0; 
+}
+
+.hero-content p {
+    font-size: 1.2em;
+    margin-top: 20px; /* Added top margin to create space below h2 */
+    margin-bottom: 30px;
+    display: inline-block;
+    padding: 10px;
+}
+
+.cta-button {
+    background-color: #ff6f61;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+.cta-button:hover {
+    background-color: #ff4a3d;
+}
+
+.form-section {
+    background-color: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-section h2 {
+    margin-top: 0;
+}
+
+.form-section form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-section form label {
+    margin-bottom: 5px;
+}
+
+.form-section form input {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-section form button {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.form-section form button:hover {
+    background-color: #555;
+}
+
+.content-section {
+    background-color: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.content-section h2 {
+    margin-top: 0;
+}
+
+#charts, #key-metrics, #suggestions, #community-forums {
+    margin-top: 20px;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    flex-shrink: 0; /* Added to ensure footer is visible */
+    position: relative; /* Changed from fixed to relative */
+}
+
+.footer-content a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.footer-content a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .navbar nav {
+        display: block;
+    }
+    .navbar .logo {
+        text-align: center;
+        width: 100%;
+    }
+    .mobile-nav {
+        display: block;
+        background-color: #333;
+        padding: 10px 0;
+    }
+    .mobile-nav ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+    .mobile-nav ul li {
+        margin: 10px 0;
+    }
+    .mobile-nav ul li a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .mobile-nav ul li a:hover {
+        text-decoration: underline;
+    }
+}
