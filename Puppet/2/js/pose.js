@@ -1,6 +1,7 @@
 /* ================================================================
    MEDIAPIPE POSE
    ================================================================ */
+let isInferring = false;
 function initPose() {
   mpPose = new Pose({
     locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`,
@@ -12,13 +13,23 @@ function initPose() {
     minDetectionConfidence: CONFIG.MIN_DETECTION_CONFIDENCE,
     minTrackingConfidence: CONFIG.MIN_TRACKING_CONFIDENCE,
   });
-  mpPose.onResults((r) => { latestResults = r; });
+  mpPose.onResults((r) => { 
+    latestResults = r; 
+    isInferring = false;
+  });
 
   mpCamera = new Camera(videoElement, {
     onFrame: async () => {
+      if (isInferring) return;
       if (myFrameCount - lastInferFrame >= CONFIG.INFER_EVERY_N_FRAMES) {
         lastInferFrame = myFrameCount;
-        await mpPose.send({ image: videoElement });
+        isInferring = true;
+        try {
+          await mpPose.send({ image: videoElement });
+        } catch (e) {
+          console.error("Pose inference error:", e);
+          isInferring = false;
+        }
       }
     },
     width: CONFIG.CAM_W,
