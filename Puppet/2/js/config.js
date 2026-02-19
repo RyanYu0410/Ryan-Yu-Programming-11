@@ -3,19 +3,19 @@
    ================================================================ */
 const CONFIG = {
   // MediaPipe
-  MODEL_COMPLEXITY: 1,
+  MODEL_COMPLEXITY: 0,        // 0 = lite/fast (less lag), 1 = full (more accurate but heavy)
   MIN_DETECTION_CONFIDENCE: 0.5,
   MIN_TRACKING_CONFIDENCE: 0.5,
-  INFER_EVERY_N_FRAMES: 2,
+  INFER_EVERY_N_FRAMES: 3,    // Send frame to MediaPipe every N frames (higher = less lag)
 
   // EMA landmark smoothing
   EMA_ALPHA: 0.4,
   MIN_VISIBILITY: 0.4,
 
   // OCR
-  OCR_INTERVAL_MS: 600,       // ms between Tesseract calls (lower = faster but heavier)
+  OCR_INTERVAL_MS: 800,       // ms between Tesseract calls (higher = less lag)
   OCR_CONFIDENCE_MIN: 25,     // ignore results below this confidence (0-100)
-  OCR_CANVAS_SIZE: 200,       // px — resolution of canvas sent to Tesseract
+  OCR_CANVAS_SIZE: 160,       // px — resolution of canvas sent to Tesseract (smaller = less lag)
   OCR_LINE_WIDTH: 5,          // stroke thickness on OCR canvas
   OCR_PADDING: 28,            // px padding inside OCR canvas
   OCR_WHITELIST: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
