@@ -38,16 +38,22 @@ function detectIntent(pts, shoulderW, torsoH) {
   const leftHandLowRight = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x > pts['midSpine'].x;
   const leftHandLowLeft = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x < pts['midSpine'].x - shoulderW*0.5;
 
-  const leftHandOnHip = leftHand && leftElbow && leftHand.y > pts['midSpine'].y && leftHand.y < pts['pelvis'].y + shoulderW * 1.5 && Math.abs(leftHand.x - pts['pelvis'].x) < shoulderW * 1.5 && leftElbow.x < pts['neck'].x - shoulderW * 0.3;
-  const rightHandOnHip = rightHand && rightElbow && rightHand.y > pts['midSpine'].y && rightHand.y < pts['pelvis'].y + shoulderW * 1.5 && Math.abs(rightHand.x - pts['pelvis'].x) < shoulderW * 1.5 && rightElbow.x > pts['neck'].x + shoulderW * 0.3;
+  const leftHandOnHip = leftHand && leftElbow && leftHand.y > pts['midSpine'].y && leftHand.y < pts['pelvis'].y + shoulderW && Math.abs(leftHand.x - pts['pelvis'].x) < shoulderW * 1.2 && leftElbow.x < pts['neck'].x - shoulderW * 0.5;
+  const rightHandOnHip = rightHand && rightElbow && rightHand.y > pts['midSpine'].y && rightHand.y < pts['pelvis'].y + shoulderW && Math.abs(rightHand.x - pts['pelvis'].x) < shoulderW * 1.2 && rightElbow.x > pts['neck'].x + shoulderW * 0.5;
+
+  const leftLegLifted = leftFoot && rightFoot && leftFoot.y < rightFoot.y - shoulderW * 1.2;
+  const rightLegLifted = rightFoot && leftFoot && rightFoot.y < leftFoot.y - shoulderW * 1.2;
+  
+  // Curled up (squatting): Distance from neck to foot is very small compared to normal standing
+  const curledUp = leftFoot && rightFoot && pts['neck'] && (leftFoot.y - pts['neck'].y < shoulderW * 3.0) && (rightFoot.y - pts['neck'].y < shoulderW * 3.0);
 
   // -- THE ALPHABET RULEBOOK --
 
   // A: Hands clasped above head, legs spread
   if (bothHandsUp && handsClasped && legsSpread) return 'A';
 
-  // B: Right hand on hip, left hand on hip (both elbows out)
-  if (rightHandOnHip && leftHandOnHip) return 'B';
+  // B: Lift one leg (left or right) significantly higher than the other, hands down
+  if ((leftLegLifted || rightLegLifted) && bothHandsDown) return 'B';
 
   // C: Both arms curved to the left
   if (rightHand && leftHand && rightHand.x < pts['neck'].x && leftHand.x < pts['pelvis'].x && !bothHandsUp && !bothHandsDown) {
@@ -59,12 +65,8 @@ function detectIntent(pts, shoulderW, torsoH) {
     if (!legsSpread) return 'D';
   }
 
-  // E: Right arm horizontal right, right leg horizontal right. (Hard! Fallback: Both arms horizontal right)
-  // New E logic: Right arm horizontal right, left arm horizontal right (both pointing right). Left leg straight, right leg straight.
-  const rightArmHorizontalRight = rightHand && rightElbow && rightHand.x > pts['neck'].x + shoulderW && rightElbow.x > pts['neck'].x && Math.abs(rightHand.y - pts['neck'].y) < shoulderW * 0.8;
-  const leftArmHorizontalRight = leftHand && leftElbow && leftHand.x > pts['neck'].x && leftElbow.x > pts['neck'].x && Math.abs(leftHand.y - pts['midSpine'].y) < shoulderW * 0.8;
-  
-  if (rightArmHorizontalRight && leftArmHorizontalRight) return 'E';
+  // E: Curled up in a ball (squatting down)
+  if (curledUp) return 'E';
 
   // F: Right arm horizontal right, left arm horizontal right lower down. Left leg lifted? 
   // Let's simplify F: Right arm horizontal right, left hand near mid spine.
@@ -159,12 +161,17 @@ function drawTemplate(ctx, letter, scale, bw, bh, cx, cy, S) {
         ctx.lineTo(x + letterW*0.25, y + letterH*0.1);
         break;
       case 'B':
-        ctx.moveTo(x - letterW*0.3, y - letterH/2);
-        ctx.lineTo(x - letterW*0.3, y + letterH/2);
-        ctx.moveTo(x - letterW*0.3, y - letterH/2);
-        ctx.bezierCurveTo(x + letterW*0.8, y - letterH/2, x + letterW*0.8, y, x - letterW*0.3, y);
-        ctx.moveTo(x - letterW*0.3, y);
-        ctx.bezierCurveTo(x + letterW*0.9, y, x + letterW*0.9, y + letterH/2, x - letterW*0.3, y + letterH/2);
+        ctx.moveTo(x - letterW*0.4, y - letterH/2);
+        ctx.lineTo(x - letterW*0.4, y + letterH/2);
+        
+        ctx.moveTo(x - letterW*0.4, y - letterH/2);
+        ctx.lineTo(x + letterW*0.1, y - letterH/2);
+        ctx.arc(x + letterW*0.1, y - letterH/4, letterH/4, -Math.PI/2, Math.PI/2);
+        ctx.lineTo(x - letterW*0.4, y);
+        
+        ctx.lineTo(x + letterW*0.2, y);
+        ctx.arc(x + letterW*0.2, y + letterH/4, letterH/4, -Math.PI/2, Math.PI/2);
+        ctx.lineTo(x - letterW*0.4, y + letterH/2);
         break;
       case 'C':
         ctx.arc(x, y, letterH/2, Math.PI * 0.25, Math.PI * 1.75);
