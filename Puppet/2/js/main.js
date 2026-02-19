@@ -63,3 +63,36 @@ function draw() {
 
   updateHUD(hasPose);
 }
+
+/* ================================================================
+   p5.js DRAWING HELPERS (Main Canvas)
+   ================================================================ */
+const POSE_CONNECTIONS = [
+  [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // Upper body
+  [11, 23], [12, 24], [23, 24], // Torso
+  [23, 25], [25, 27], [24, 26], [26, 28] // Lower body
+];
+
+function drawSkeletonOverlay(landmarks) {
+  stroke(99, 202, 255, 160);
+  strokeWeight(3);
+  for (const [a, b] of POSE_CONNECTIONS) {
+    if (landmarks[a].visibility < CONFIG.MIN_VISIBILITY ||
+        landmarks[b].visibility < CONFIG.MIN_VISIBILITY) continue;
+    const pa = { x: width - landmarks[a].x * width, y: landmarks[a].y * height };
+    const pb = { x: width - landmarks[b].x * width, y: landmarks[b].y * height };
+    line(pa.x, pa.y, pb.x, pb.y);
+  }
+}
+
+function drawLandmarkDots(landmarks) {
+  noStroke();
+  for (let i = 0; i < landmarks.length; i++) {
+    const lm = landmarks[i];
+    if (lm.visibility < CONFIG.MIN_VISIBILITY) continue;
+    const p = { x: width - lm.x * width, y: lm.y * height };
+    const sz = [11,12,23,24].includes(i) ? 8 : 5;
+    fill(255, 255, 255, 200);
+    ellipse(p.x, p.y, sz, sz);
+  }
+}
