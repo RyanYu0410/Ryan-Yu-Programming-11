@@ -53,19 +53,28 @@ function maybeRunOCR(lms) {
     // with the highest confidence score — ignores noise, spaces, punctuation
     let bestChar = null;
     let bestConf = -1;
+    let cands = [];
+
+    // 1. Add currentIntent from pose rules if available (Highest priority)
+    if (window.currentIntent && !cands.includes(window.currentIntent)) {
+      cands.push(window.currentIntent);
+    }
 
     const symbols = result.data.symbols || [];
     for (const sym of symbols) {
       const ch = (sym.text || '').trim().toUpperCase();
-      if (/^[A-Z]$/.test(ch) && sym.confidence > bestConf) {
-        bestConf = sym.confidence;
-        bestChar = ch;
+      if (/^[A-Z]$/.test(ch)) {
+        if (sym.confidence > bestConf) {
+          bestConf = sym.confidence;
+          bestChar = ch;
+        }
+        if (!cands.includes(ch)) cands.push(ch);
       }
     }
 
     // Fallback: if symbol data is empty, parse the raw text string
+    const raw = result.data.text.trim().toUpperCase();
     if (!bestChar) {
-      const raw = result.data.text.trim().toUpperCase();
       const match = raw.match(/[A-Z]/);
       if (match) {
         bestChar = match[0];
@@ -73,13 +82,29 @@ function maybeRunOCR(lms) {
       }
     }
 
+    for (let i = 0; i < raw.length; i++) {
+       const ch = raw[i];
+       if (/^[A-Z]$/.test(ch) && !cands.includes(ch)) cands.push(ch);
+    }
+
     ocrRawText = bestChar || '';
     ocrConfidence = bestConf > 0 ? bestConf : 0;
 
-    if (bestChar && bestConf >= CONFIG.OCR_CONFIDENCE_MIN) {
-      ocrLetter = bestChar;
+    // Use currentIntent if available, otherwise bestChar from OCR
+    const primaryLetter = window.currentIntent || (bestChar && bestConf >= CONFIG.OCR_CONFIDENCE_MIN ? bestChar : null);
+
+    if (primaryLetter) {
+      ocrLetter = primaryLetter;
     } else {
       ocrLetter = null;
+    }
+
+    // Set global candidates for finger selection menu (max 3 choices)
+    // Only show menu if there's ambiguity (more than 1 choice) or OCR disagrees with intent
+    if (cands.length > 1) {
+      ocrCandidates = cands.slice(0, 4); // Show up to 4 choices
+    } else {
+      ocrCandidates = [];
     }
 
     // --- Stability gate ---

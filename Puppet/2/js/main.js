@@ -50,6 +50,7 @@ function draw() {
       drawSkeletonOverlay(smoothedLandmarks);
       drawLandmarkDots(smoothedLandmarks);
       maybeRunOCR(smoothedLandmarks);
+      handleFingerSelection(smoothedLandmarks);
     }
   }
 
@@ -62,6 +63,102 @@ function draw() {
   }
 
   updateHUD(hasPose);
+}
+
+/* ================================================================
+   FINGER SELECTION MENU
+   ================================================================ */
+function handleFingerSelection(landmarks) {
+  const now = performance.now();
+  if (now < lockoutUntil || ocrCandidates.length <= 1) {
+    hoverLetter = null;
+    hoverProgress = 0;
+    return;
+  }
+
+  const boxW = 80;
+  const boxH = 80;
+  const gap = 20;
+  const totalW = ocrCandidates.length * boxW + (ocrCandidates.length - 1) * gap;
+  const startX = width / 2 - totalW / 2;
+  const by = height * 0.15; // Top of screen
+
+  let currentlyHovering = null;
+
+  // 19 = left index, 20 = right index (mirrored)
+  const leftIndex = landmarks[19];
+  const rightIndex = landmarks[20];
+  const fingers = [];
+  if (leftIndex && leftIndex.visibility > CONFIG.MIN_VISIBILITY) {
+    fingers.push({ x: width - leftIndex.x * width, y: leftIndex.y * height });
+  }
+  if (rightIndex && rightIndex.visibility > CONFIG.MIN_VISIBILITY) {
+    fingers.push({ x: width - rightIndex.x * width, y: rightIndex.y * height });
+  }
+
+  textAlign(CENTER, CENTER);
+  for (let i = 0; i < ocrCandidates.length; i++) {
+    const ch = ocrCandidates[i];
+    const bx = startX + i * (boxW + gap);
+
+    // Check collision
+    let isHover = false;
+    for (const f of fingers) {
+      if (f.x > bx && f.x < bx + boxW && f.y > by && f.y < by + boxH) {
+        isHover = true;
+        break;
+      }
+    }
+
+    if (isHover) {
+      currentlyHovering = ch;
+    }
+
+    // Draw box
+    if (hoverLetter === ch) {
+      fill(99, 202, 255, 220); // Highlight color
+    } else {
+      fill(0, 0, 0, 150);
+    }
+    stroke(255, 255, 255, 100);
+    strokeWeight(2);
+    rect(bx, by, boxW, boxH, 12);
+
+    // Draw text
+    fill(255);
+    noStroke();
+    textSize(40);
+    text(ch, bx + boxW/2, by + boxH/2 + 5);
+
+    // Draw progress ring
+    if (hoverLetter === ch && hoverProgress > 0) {
+      noFill();
+      stroke(255, 255, 255, 220);
+      strokeWeight(5);
+      const angle = (hoverProgress / 100) * TWO_PI;
+      arc(bx + boxW/2, by + boxH/2, boxW - 10, boxH - 10, -PI/2, -PI/2 + angle);
+    }
+  }
+
+  // Update hover state
+  if (currentlyHovering) {
+    if (hoverLetter === currentlyHovering) {
+      hoverProgress += 4; // Takes 25 frames (~0.5s-0.8s depending on framerate)
+      if (hoverProgress >= 100) {
+        confirmed = currentlyHovering;
+        lockoutUntil = performance.now() + CONFIG.LOCKOUT_MS;
+        hoverLetter = null;
+        hoverProgress = 0;
+        ocrCandidates = []; // Clear menu on confirm
+      }
+    } else {
+      hoverLetter = currentlyHovering;
+      hoverProgress = 0;
+    }
+  } else {
+    hoverLetter = null;
+    hoverProgress = 0;
+  }
 }
 
 /* ================================================================

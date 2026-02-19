@@ -381,6 +381,7 @@ function renderPoseForOCR(lms) {
 
   // 1. Detect Explicit Letter Intent
   const intent = detectIntent(pts, shoulderWidth, torsoHeight);
+  if (typeof window !== 'undefined') window.currentIntent = intent;
 
   // 2. Clear canvas
   ocrCtx.fillStyle = '#ffffff';

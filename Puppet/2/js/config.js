@@ -40,7 +40,7 @@ let myFrameCount = 0;
 let lastInferFrame = -999;
 let videoElement;
 
-// OCR state
+// OCR & Intent state
 let ocrWorker = null;
 let ocrReady = false;
 let ocrBusy = false;
@@ -48,6 +48,12 @@ let lastOCRTime = 0;
 let ocrLetter = null;          // latest single-char result
 let ocrConfidence = 0;         // 0-100
 let ocrRawText = '';
+let currentIntent = null;      // Extracted from pose rules
+let ocrCandidates = [];        // Top choices for finger selection
+
+// Finger Selection UI
+let hoverLetter = null;
+let hoverProgress = 0;
 
 // Stability
 let stableCandidate = null;
