@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Puppet</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+    }
+
+    .ui-hint {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .restart-btn {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 25px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    .restart-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateX(-50%) scale(1.02);
+    }
+
+    .restart-btn:active {
+      transform: translateX(-50%) scale(0.98);
+    }
+
+    .btn-group {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 25px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.02);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn.clear {
+      background: rgba(255,100,100,0.2);
+      border-color: rgba(255,100,100,0.3);
+    }
+
+    .btn.clear:hover {
+      background: rgba(255,100,100,0.35);
+    }
+
+    .letter-hint {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div class="ui-hint">拖拽身体部位 · 点击空白处推动</div>
+  <div class="letter-hint">按键盘输入字符 ⌨️</div>
+  <div class="btn-group">
+    <button class="btn" id="restartBtn">重置人偶</button>
+    <button class="btn clear" id="clearBtn">清除字符</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+  <script>
+    const { Engine, Render, Runner, World, Bodies, Body, Constraint, Composite, Events, Mouse, MouseConstraint, Vector } = Matter;
+
+    // ============ 配置 ============
+    const config = {
+      // 人体比例 (以头部为单位1)
+      headRadius: 28,
+      neckLength: 12,
+      torsoWidth: 56,
+      torsoHeight: 80,
+      pelvisWidth: 48,
+      pelvisHeight: 28,
+      upperArmLength: 55,
+      upperArmWidth: 14,
+      lowerArmLength: 50,
+      lowerArmWidth: 12,
+      handRadius: 10,
+      upperLegLength: 65,
+      upperLegWidth: 18,
+      lowerLegLength: 60,
+      lowerLegWidth: 14,
+      footWidth: 32,
+      footHeight: 12,
+    };
+
+    // 颜色方案 - 温暖自然
+    const colors = {
+      skin: '#e8beac',
+      skinLight: '#f5d0c0',
+      hair: '#4a3728',
+      shirt: '#5d8aa8',
+      shirtDark: '#4a7a98',
+      pants: '#3d4f5f',
+      pantsDark: '#2d3f4f',
+      shoes: '#2a2a2a',
+      joint: '#d4a088',
+    };
+
+    // ============ 初始化引擎 ============
+    const container = document.getElementById('canvas-container');
+    const engine = Engine.create();
+    engine.gravity.y = 1;
+
+    const render = Render.create({
+      element: container,
+      engine,
+      options: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        wireframes: false,
+        background: 'transparent',
+        pixelRatio: Math.min(window.devicePixelRatio, 2),
+      }
+    });
+
+    // ============ 边界 ============
+    const wallThickness = 100;
+    const walls = {
+      bottom: Bodies.rectangle(window.innerWidth/2, window.innerHeight + wallThickness/2, window.innerWidth * 2, wallThickness, { isStatic: true, render: { visible: false } }),
+      top: Bodies.rectangle(window.innerWidth/2, -wallThickness/2, window.innerWidth * 2, wallThickness, { isStatic: true, render: { visible: false } }),
+      left: Bodies.rectangle(-wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight * 2, { isStatic: true, render: { visible: false } }),
+      right: Bodies.rectangle(window.innerWidth + wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight * 2, { isStatic: true, render: { visible: false } }),
+    };
+
+    // ============ 创建人偶 ============
+    let puppet = null;
+
+    function createHuman(x, y, scale = 1) {
+      const s = scale;
+      const c = config;
+      const group = Body.nextGroup(true);
+      
+      const opts = (extra = {}) => ({
+        collisionFilter: { group },
+        frictionAir: 0.02,
+        friction: 0.8,
+        restitution: 0.1,
+        ...extra,
+      });
+
+      // ========== 身体部件 ==========
+      
+      // 头部
+      const head = Bodies.circle(x, y - 180*s, c.headRadius*s, opts({
+        render: { fillStyle: colors.skin },
+        frictionAir: 0.03,
+      }));
+
+      // 颈部 (小圆)
+      const neck = Bodies.circle(x, y - 145*s, 8*s, opts({
+        render: { fillStyle: colors.skinLight },
+      }));
+
+      // 躯干 (上半身)
+      const torso = Bodies.rectangle(x, y - 95*s, c.torsoWidth*s, c.torsoHeight*s, opts({
+        chamfer: { radius: 8*s },
+        render: { fillStyle: colors.shirt },
+      }));
+
+      // 骨盆 (下半身)
+      const pelvis = Bodies.rectangle(x, y - 35*s, c.pelvisWidth*s, c.pelvisHeight*s, opts({
+        chamfer: { radius: 6*s },
+        render: { fillStyle: colors.pants },
+      }));
+
+      // ===== 左臂 =====
+      const leftUpperArm = Bodies.rectangle(x - 45*s, y - 100*s, c.upperArmWidth*s, c.upperArmLength*s, opts({
+        chamfer: { radius: 6*s },
+        render: { fillStyle: colors.shirtDark },
+      }));
+
+      const leftLowerArm = Bodies.rectangle(x - 45*s, y - 40*s, c.lowerArmWidth*s, c.lowerArmLength*s, opts({
+        chamfer: { radius: 5*s },
+        render: { fillStyle: colors.skinLight },
+      }));
+
+      const leftHand = Bodies.circle(x - 45*s, y - 5*s, c.handRadius*s, opts({
+        render: { fillStyle: colors.skin },
+        frictionAir: 0.01,
+      }));
+
+      // ===== 右臂 =====
+      const rightUpperArm = Bodies.rectangle(x + 45*s, y - 100*s, c.upperArmWidth*s, c.upperArmLength*s, opts({
+        chamfer: { radius: 6*s },
+        render: { fillStyle: colors.shirtDark },
+      }));
+
+      const rightLowerArm = Bodies.rectangle(x + 45*s, y - 40*s, c.lowerArmWidth*s, c.lowerArmLength*s, opts({
+        chamfer: { radius: 5*s },
+        render: { fillStyle: colors.skinLight },
+      }));
+
+      const rightHand = Bodies.circle(x + 45*s, y - 5*s, c.handRadius*s, opts({
+        render: { fillStyle: colors.skin },
+        frictionAir: 0.01,
+      }));
+
+      // ===== 左腿 =====
+      const leftUpperLeg = Bodies.rectangle(x - 18*s, y + 20*s, c.upperLegWidth*s, c.upperLegLength*s, opts({
+        chamfer: { radius: 6*s },
+        render: { fillStyle: colors.pantsDark },
+      }));
+
+      const leftLowerLeg = Bodies.rectangle(x - 18*s, y + 90*s, c.lowerLegWidth*s, c.lowerLegLength*s, opts({
+        chamfer: { radius: 5*s },
+        render: { fillStyle: colors.pants },
+      }));
+
+      const leftFoot = Bodies.rectangle(x - 18*s, y + 130*s, c.footWidth*s, c.footHeight*s, opts({
+        chamfer: { radius: 4*s },
+        render: { fillStyle: colors.shoes },
+        friction: 1,
+      }));
+
+      // ===== 右腿 =====
+      const rightUpperLeg = Bodies.rectangle(x + 18*s, y + 20*s, c.upperLegWidth*s, c.upperLegLength*s, opts({
+        chamfer: { radius: 6*s },
+        render: { fillStyle: colors.pantsDark },
+      }));
+
+      const rightLowerLeg = Bodies.rectangle(x + 18*s, y + 90*s, c.lowerLegWidth*s, c.lowerLegLength*s, opts({
+        chamfer: { radius: 5*s },
+        render: { fillStyle: colors.pants },
+      }));
+
+      const rightFoot = Bodies.rectangle(x + 18*s, y + 130*s, c.footWidth*s, c.footHeight*s, opts({
+        chamfer: { radius: 4*s },
+        render: { fillStyle: colors.shoes },
+        friction: 1,
+      }));
+
+      // ========== 关节约束 ==========
+      
+      const joint = (bodyA, bodyB, pointA, pointB, stiffness = 0.9, damping = 0.3) => {
+        return Constraint.create({
+          bodyA,
+          bodyB,
+          pointA: { x: pointA[0]*s, y: pointA[1]*s },
+          pointB: { x: pointB[0]*s, y: pointB[1]*s },
+          stiffness,
+          damping,
+          render: { visible: false },
+        });
+      };
+
+      // 刚性骨骼连接
+      const bone = (bodyA, bodyB, pointA, pointB) => joint(bodyA, bodyB, pointA, pointB, 0.95, 0.4);
+      
+      // 弹性关节连接
+      const elastic = (bodyA, bodyB, pointA, pointB) => joint(bodyA, bodyB, pointA, pointB, 0.7, 0.2);
+
+      // 筋腱 (限制弯折)
+      const tendon = (bodyA, bodyB, slack = 1.05) => {
+        const dist = Vector.magnitude(Vector.sub(bodyB.position, bodyA.position));
+        return Constraint.create({
+          bodyA,
+          bodyB,
+          length: dist * slack,
+          stiffness: 0.5,
+          damping: 0.3,
+          render: { visible: false },
+        });
+      };
+
+      const constraints = [
+        // === 脊椎 (刚性) ===
+        bone(head, neck, [0, c.headRadius], [0, -4]),
+        bone(neck, torso, [0, 4], [0, -c.torsoHeight/2]),
+        bone(torso, pelvis, [0, c.torsoHeight/2], [0, -c.pelvisHeight/2]),
+
+        // === 左臂 ===
+        elastic(torso, leftUpperArm, [-c.torsoWidth/2 + 5, -c.torsoHeight/2 + 10], [0, -c.upperArmLength/2]),
+        elastic(leftUpperArm, leftLowerArm, [0, c.upperArmLength/2], [0, -c.lowerArmLength/2]),
+        elastic(leftLowerArm, leftHand, [0, c.lowerArmLength/2], [0, 0]),
+
+        // === 右臂 ===
+        elastic(torso, rightUpperArm, [c.torsoWidth/2 - 5, -c.torsoHeight/2 + 10], [0, -c.upperArmLength/2]),
+        elastic(rightUpperArm, rightLowerArm, [0, c.upperArmLength/2], [0, -c.lowerArmLength/2]),
+        elastic(rightLowerArm, rightHand, [0, c.lowerArmLength/2], [0, 0]),
+
+        // === 左腿 ===
+        elastic(pelvis, leftUpperLeg, [-c.pelvisWidth/2 + 12, c.pelvisHeight/2 - 5], [0, -c.upperLegLength/2]),
+        elastic(leftUpperLeg, leftLowerLeg, [0, c.upperLegLength/2], [0, -c.lowerLegLength/2]),
+        elastic(leftLowerLeg, leftFoot, [0, c.lowerLegLength/2], [0, 0]),
+
+        // === 右腿 ===
+        elastic(pelvis, rightUpperLeg, [c.pelvisWidth/2 - 12, c.pelvisHeight/2 - 5], [0, -c.upperLegLength/2]),
+        elastic(rightUpperLeg, rightLowerLeg, [0, c.upperLegLength/2], [0, -c.lowerLegLength/2]),
+        elastic(rightLowerLeg, rightFoot, [0, c.lowerLegLength/2], [0, 0]),
+
+        // === 筋腱 (防止过度弯折) ===
+        // 颈部筋
+        tendon(head, torso, 1.02),
+        // 肩部筋
+        tendon(torso, leftLowerArm, 1.1),
+        tendon(torso, rightLowerArm, 1.1),
+        // 肘部筋
+        tendon(leftUpperArm, leftHand, 1.08),
+        tendon(rightUpperArm, rightHand, 1.08),
+        // 髋部筋
+        tendon(pelvis, leftLowerLeg, 1.1),
+        tendon(pelvis, rightLowerLeg, 1.1),
+        // 膝部筋
+        tendon(leftUpperLeg, leftFoot, 1.08),
+        tendon(rightUpperLeg, rightFoot, 1.08),
+        // 躯干稳定筋
+        tendon(torso, leftUpperLeg, 1.05),
+        tendon(torso, rightUpperLeg, 1.05),
+      ];
+
+      // ========== 设置质量 ==========
+      Body.setMass(head, 5);
+      Body.setMass(neck, 1);
+      Body.setMass(torso, 15);
+      Body.setMass(pelvis, 10);
+      Body.setMass(leftUpperArm, 3);
+      Body.setMass(leftLowerArm, 2);
+      Body.setMass(leftHand, 1);
+      Body.setMass(rightUpperArm, 3);
+      Body.setMass(rightLowerArm, 2);
+      Body.setMass(rightHand, 1);
+      Body.setMass(leftUpperLeg, 5);
+      Body.setMass(leftLowerLeg, 3);
+      Body.setMass(leftFoot, 2);
+      Body.setMass(rightUpperLeg, 5);
+      Body.setMass(rightLowerLeg, 3);
+      Body.setMass(rightFoot, 2);
+
+      // ========== 组合 ==========
+      const humanComposite = Composite.create({ label: 'human' });
+      
+      Composite.add(humanComposite, [
+        head, neck, torso, pelvis,
+        leftUpperArm, leftLowerArm, leftHand,
+        rightUpperArm, rightLowerArm, rightHand,
+        leftUpperLeg, leftLowerLeg, leftFoot,
+        rightUpperLeg, rightLowerLeg, rightFoot,
+        ...constraints,
+      ]);
+
+      return humanComposite;
+    }
+
+    // ============ 初始化场景 ============
+    function getScale() {
+      return Math.max(0.6, Math.min(window.innerWidth, window.innerHeight) / 900);
+    }
+
+    function initPuppet() {
+      if (puppet) {
+        World.remove(engine.world, puppet);
+      }
+      puppet = createHuman(
+        window.innerWidth / 2,
+        window.innerHeight * 0.4,
+        getScale()
+      );
+      World.add(engine.world, puppet);
+    }
+
+    World.add(engine.world, Object.values(walls));
+    initPuppet();
+
+    // ============ 鼠标交互 ============
+    const mouse = Mouse.create(render.canvas);
+    const mouseConstraint = MouseConstraint.create(engine, {
+      mouse,
+      constraint: {
+        stiffness: 0.4,
+        damping: 0.2,
+        render: { visible: false },
+      }
+    });
+    World.add(engine.world, mouseConstraint);
+    render.mouse = mouse;
+
+    // 点击空白处推动人偶
+    Events.on(mouseConstraint, 'mousedown', (e) => {
+      if (!e.body && puppet) {
+        const mousePos = e.mouse.position;
+        const center = { x: window.innerWidth/2, y: window.innerHeight/2 };
+        const direction = Vector.normalise(Vector.sub(mousePos, center));
+        const force = Vector.mult(direction, 0.015);
+        
+        Composite.allBodies(puppet).forEach(body => {
+          Body.applyForce(body, body.position, force);
+        });
+      }
+    });
+
+    // ============ 自然摇摆 ============
+    Events.on(engine, 'beforeUpdate', () => {
+      const time = engine.timing.timestamp;
+      const sway = Math.sin(time * 0.001) * 0.0005;
+      
+      if (puppet) {
+        Composite.allBodies(puppet).forEach(body => {
+          Body.applyForce(body, body.position, { x: sway * body.mass, y: 0 });
+        });
+      }
+    });
+
+    // ============ 窗口晃动影响物理 ============
+    let lastWindowX = window.screenX;
+    let lastWindowY = window.screenY;
+    let windowVelocityX = 0;
+    let windowVelocityY = 0;
+    const SHAKE_SENSITIVITY = 0.0008; // 晃动敏感度
+    const SHAKE_DAMPING = 0.85; // 速度衰减
+
+    // 检测窗口移动（桌面端）
+    function detectWindowShake() {
+      const currentX = window.screenX;
+      const currentY = window.screenY;
+      
+      // 计算窗口移动速度
+      const deltaX = currentX - lastWindowX;
+      const deltaY = currentY - lastWindowY;
+      
+      // 平滑速度
+      windowVelocityX = windowVelocityX * SHAKE_DAMPING + deltaX * (1 - SHAKE_DAMPING);
+      windowVelocityY = windowVelocityY * SHAKE_DAMPING + deltaY * (1 - SHAKE_DAMPING);
+      
+      lastWindowX = currentX;
+      lastWindowY = currentY;
+      
+      // 如果有明显移动，应用力到所有物体
+      if (Math.abs(windowVelocityX) > 0.5 || Math.abs(windowVelocityY) > 0.5) {
+        const force = {
+          x: -windowVelocityX * SHAKE_SENSITIVITY,
+          y: -windowVelocityY * SHAKE_SENSITIVITY,
+        };
+        
+        // 应用到人偶
+        if (puppet) {
+          Composite.allBodies(puppet).forEach(body => {
+            Body.applyForce(body, body.position, {
+              x: force.x * body.mass,
+              y: force.y * body.mass,
+            });
+          });
+        }
+        
+        // 应用到落下的字符
+        fallingLetters.forEach(letter => {
+          Body.applyForce(letter, letter.position, {
+            x: force.x * letter.mass,
+            y: force.y * letter.mass,
+          });
+        });
+      }
+      
+      requestAnimationFrame(detectWindowShake);
+    }
+    
+    detectWindowShake();
+
+    // 设备加速度检测（移动端）
+    if (window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', (e) => {
+        const accel = e.accelerationIncludingGravity;
+        if (!accel) return;
+        
+        const forceX = (accel.x || 0) * 0.0003;
+        const forceY = -(accel.y || 0) * 0.0003;
+        
+        // 应用到人偶
+        if (puppet) {
+          Composite.allBodies(puppet).forEach(body => {
+            Body.applyForce(body, body.position, {
+              x: forceX * body.mass,
+              y: forceY * body.mass,
+            });
+          });
+        }
+        
+        // 应用到落下的字符
+        fallingLetters.forEach(letter => {
+          Body.applyForce(letter, letter.position, {
+            x: forceX * letter.mass,
+            y: forceY * letter.mass,
+          });
+        });
+      });
+    }
+
+    // 设备方向检测（移动端倾斜）
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', (e) => {
+        const gamma = e.gamma || 0; // 左右倾斜 (-90 to 90)
+        const beta = e.beta || 0;   // 前后倾斜 (-180 to 180)
+        
+        // 根据倾斜调整重力方向
+        const gravityX = Math.sin(gamma * Math.PI / 180) * 1.5;
+        const gravityY = Math.cos(beta * Math.PI / 180) * 1.5;
+        
+        engine.gravity.x = gravityX;
+        engine.gravity.y = Math.max(0.3, gravityY);
+      });
+    }
+
+    // ============ 键盘输入 - 落下字符 ============
+    const fallingLetters = [];
+    const pendingChars = []; // 等待下落的字符队列
+    let dropTimer = null;
+    const DROP_DELAY = 800; // 停止输入后等待时间 (ms)
+    const DROP_INTERVAL = 120; // 每个字符下落间隔 (ms)
+
+    const letterColors = [
+      '#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff',
+      '#5f27cd', '#00d2d3', '#1dd1a1', '#ffeaa7',
+      '#fd79a8', '#a29bfe', '#fdcb6e', '#e17055', '#00cec9',
+    ];
+
+    // 创建并释放一个字符物体
+    function dropLetter(char, xPos) {
+      const size = 36;
+      const color = letterColors[Math.floor(Math.random() * letterColors.length)];
+      
+      // 创建字符物体 - 透明边界，只显示文字
+      const letter = Bodies.circle(xPos, -30, size * 0.5, {
+        restitution: 0.5,
+        friction: 0.6,
+        frictionAir: 0.008,
+        render: {
+          visible: false, // 隐藏物理边界
+        },
+        label: 'letter',
+      });
+
+      // 存储字符信息用于渲染
+      letter.char = char;
+      letter.fontSize = size;
+      letter.color = color;
+
+      // 给一点初始旋转
+      Body.setAngularVelocity(letter, (Math.random() - 0.5) * 0.05);
+      
+      fallingLetters.push(letter);
+      World.add(engine.world, letter);
+      
+      return letter;
+    }
+
+    // 开始按顺序下落字符
+    function startDropping() {
+      if (pendingChars.length === 0) return;
+      
+      const chars = [...pendingChars];
+      pendingChars.length = 0;
+      
+      // 计算起始位置，从左到右均匀分布
+      const padding = 80;
+      const availableWidth = window.innerWidth - padding * 2;
+      const spacing = Math.min(50, availableWidth / Math.max(chars.length, 1));
+      const startX = padding + (availableWidth - spacing * (chars.length - 1)) / 2;
+      
+      // 依次下落每个字符
+      chars.forEach((char, index) => {
+        setTimeout(() => {
+          const x = startX + index * spacing;
+          dropLetter(char, x);
+        }, index * DROP_INTERVAL);
+      });
+    }
+
+    // 重置下落计时器
+    function resetDropTimer() {
+      if (dropTimer) {
+        clearTimeout(dropTimer);
+      }
+      dropTimer = setTimeout(() => {
+        startDropping();
+        dropTimer = null;
+      }, DROP_DELAY);
+    }
+
+    // 监听键盘输入
+    document.addEventListener('keydown', (e) => {
+      // 忽略功能键和特殊键
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Escape') return;
+      if (e.key === 'Backspace') {
+        // 退格删除最后一个待下落字符
+        if (pendingChars.length > 0) {
+          pendingChars.pop();
+        }
+        resetDropTimer();
+        return;
+      }
+      if (e.key.length > 1 && !['Enter', 'Space'].includes(e.key)) return;
+      
+      let char = e.key;
+      if (e.key === 'Enter') char = '↵';
+      if (e.key === ' ' || e.key === 'Space') char = '␣';
+      
+      pendingChars.push(char);
+      resetDropTimer();
+    });
+
+    // 清除所有字符
+    function clearLetters() {
+      // 清除已下落的
+      fallingLetters.forEach(letter => {
+        World.remove(engine.world, letter);
+      });
+      fallingLetters.length = 0;
+      
+      // 清除等待中的
+      pendingChars.length = 0;
+      if (dropTimer) {
+        clearTimeout(dropTimer);
+        dropTimer = null;
+      }
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', clearLetters);
+
+    // 自定义渲染
+    Events.on(render, 'afterRender', () => {
+      const ctx = render.context;
+      
+      // 绘制已下落的字符
+      fallingLetters.forEach(letter => {
+        if (!letter.char) return;
+        
+        const pos = letter.position;
+        const angle = letter.angle;
+        
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(angle);
+        
+        // 绘制文字阴影
+        ctx.font = `bold ${letter.fontSize}px 'Segoe UI', system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // 外发光效果
+        ctx.shadowColor = letter.color;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = letter.color;
+        ctx.fillText(letter.char, 0, 0);
+        
+        // 白色描边
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeText(letter.char, 0, 0);
+        
+        ctx.restore();
+      });
+
+      // 绘制等待下落的字符（显示在顶部）
+      if (pendingChars.length > 0) {
+        const padding = 80;
+        const availableWidth = window.innerWidth - padding * 2;
+        const spacing = Math.min(40, availableWidth / Math.max(pendingChars.length, 1));
+        const startX = padding + (availableWidth - spacing * (pendingChars.length - 1)) / 2;
+        
+        ctx.save();
+        ctx.font = `bold 32px 'Segoe UI', system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        pendingChars.forEach((char, i) => {
+          const x = startX + i * spacing;
+          const y = 90;
+          
+          // 半透明显示等待中的字符
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.shadowColor = 'rgba(255,255,255,0.3)';
+          ctx.shadowBlur = 10;
+          ctx.fillText(char, x, y);
+        });
+        
+        ctx.restore();
+      }
+    });
+
+    // ============ 窗口调整 ============
+    function onResize() {
+      render.canvas.width = window.innerWidth;
+      render.canvas.height = window.innerHeight;
+      render.options.width = window.innerWidth;
+      render.options.height = window.innerHeight;
+
+      Body.setPosition(walls.bottom, { x: window.innerWidth/2, y: window.innerHeight + wallThickness/2 });
+      Body.setPosition(walls.top, { x: window.innerWidth/2, y: -wallThickness/2 });
+      Body.setPosition(walls.left, { x: -wallThickness/2, y: window.innerHeight/2 });
+      Body.setPosition(walls.right, { x: window.innerWidth + wallThickness/2, y: window.innerHeight/2 });
+
+      initPuppet();
+    }
+
+    window.addEventListener('resize', onResize);
+    document.getElementById('restartBtn').addEventListener('click', initPuppet);
+
+    // ============ 启动 ============
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+    Render.run(render);
+  </script>
+</body>
+</html>
