@@ -38,13 +38,16 @@ function detectIntent(pts, shoulderW, torsoH) {
   const leftHandLowRight = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x > pts['midSpine'].x;
   const leftHandLowLeft = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x < pts['midSpine'].x - shoulderW*0.5;
 
+  const leftHandOnHip = leftHand && leftElbow && leftHand.y > pts['midSpine'].y && leftHand.y < pts['pelvis'].y + shoulderW && Math.abs(leftHand.x - pts['pelvis'].x) < shoulderW * 1.2 && leftElbow.x < pts['neck'].x - shoulderW * 0.5;
+  const rightHandOnHip = rightHand && rightElbow && rightHand.y > pts['midSpine'].y && rightHand.y < pts['pelvis'].y + shoulderW && Math.abs(rightHand.x - pts['pelvis'].x) < shoulderW * 1.2 && rightElbow.x > pts['neck'].x + shoulderW * 0.5;
+
   // -- THE ALPHABET RULEBOOK --
 
   // A: Hands clasped above head, legs spread
   if (bothHandsUp && handsClasped && legsSpread) return 'A';
 
   // B: Right hand on hip, left hand on hip (both elbows out)
-  if (rightHand && leftHand && dist(rightHand, pts[24]) < shoulderW && dist(leftHand, pts[23]) < shoulderW) return 'B';
+  if (rightHandOnHip && leftHandOnHip) return 'B';
 
   // C: Both arms curved to the left
   if (rightHand && leftHand && rightHand.x < pts['neck'].x && leftHand.x < pts['pelvis'].x && !bothHandsUp && !bothHandsDown) {
@@ -52,7 +55,7 @@ function detectIntent(pts, shoulderW, torsoH) {
   }
 
   // D: Right hand on hip, left arm straight down (or hidden)
-  if (rightHand && dist(rightHand, pts[24]) < shoulderW && (!leftHand || leftHand.y > pts['pelvis'].y)) {
+  if (rightHandOnHip && (!leftHand || leftHand.y > pts['pelvis'].y)) {
     if (!legsSpread) return 'D';
   }
 
