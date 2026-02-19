@@ -38,8 +38,8 @@ function detectIntent(pts, shoulderW, torsoH) {
   const leftHandLowRight = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x > pts['midSpine'].x;
   const leftHandLowLeft = leftHand && leftHand.y > pts['midSpine'].y && leftHand.x < pts['midSpine'].x - shoulderW*0.5;
 
-  const leftHandOnHip = leftHand && leftElbow && leftHand.y > pts['midSpine'].y && leftHand.y < pts['pelvis'].y + shoulderW && Math.abs(leftHand.x - pts['pelvis'].x) < shoulderW * 1.2 && leftElbow.x < pts['neck'].x - shoulderW * 0.5;
-  const rightHandOnHip = rightHand && rightElbow && rightHand.y > pts['midSpine'].y && rightHand.y < pts['pelvis'].y + shoulderW && Math.abs(rightHand.x - pts['pelvis'].x) < shoulderW * 1.2 && rightElbow.x > pts['neck'].x + shoulderW * 0.5;
+  const leftHandOnHip = leftHand && leftElbow && leftHand.y > pts['midSpine'].y && leftHand.y < pts['pelvis'].y + shoulderW * 1.5 && Math.abs(leftHand.x - pts['pelvis'].x) < shoulderW * 1.5 && leftElbow.x < pts['neck'].x - shoulderW * 0.3;
+  const rightHandOnHip = rightHand && rightElbow && rightHand.y > pts['midSpine'].y && rightHand.y < pts['pelvis'].y + shoulderW * 1.5 && Math.abs(rightHand.x - pts['pelvis'].x) < shoulderW * 1.5 && rightElbow.x > pts['neck'].x + shoulderW * 0.3;
 
   // -- THE ALPHABET RULEBOOK --
 
@@ -60,9 +60,11 @@ function detectIntent(pts, shoulderW, torsoH) {
   }
 
   // E: Right arm horizontal right, right leg horizontal right. (Hard! Fallback: Both arms horizontal right)
-  if (rightHand && leftHand && rightHand.x > pts['neck'].x + shoulderW && leftHand.x > pts['neck'].x + shoulderW) {
-    if (Math.abs(rightHand.y - pts['neck'].y) < shoulderW && Math.abs(leftHand.y - pts['midSpine'].y) < shoulderW) return 'E';
-  }
+  // New E logic: Right arm horizontal right, left arm horizontal right (both pointing right). Left leg straight, right leg straight.
+  const rightArmHorizontalRight = rightHand && rightElbow && rightHand.x > pts['neck'].x + shoulderW && rightElbow.x > pts['neck'].x && Math.abs(rightHand.y - pts['neck'].y) < shoulderW * 0.8;
+  const leftArmHorizontalRight = leftHand && leftElbow && leftHand.x > pts['neck'].x && leftElbow.x > pts['neck'].x && Math.abs(leftHand.y - pts['midSpine'].y) < shoulderW * 0.8;
+  
+  if (rightArmHorizontalRight && leftArmHorizontalRight) return 'E';
 
   // F: Right arm horizontal right, left arm horizontal right lower down. Left leg lifted? 
   // Let's simplify F: Right arm horizontal right, left hand near mid spine.
