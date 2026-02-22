@@ -74,6 +74,11 @@ function detectIntent(pts, shoulderW, torsoH) {
      if (dist(leftHand, pts['midSpine']) < shoulderW) return 'F';
   }
 
+  // G: Left arm curved up/left, right hand horizontal right at mid-spine level
+  if (leftHand && rightHand && leftHand.x < pts['neck'].x - shoulderW * 0.5 && leftHand.y < pts['neck'].y) {
+     if (rightHand.x > pts['neck'].x + shoulderW * 0.5 && Math.abs(rightHand.y - pts['midSpine'].y) < shoulderW) return 'G';
+  }
+
   // O: Hands clasped above head, legs together (distinguish from A)
   if (bothHandsUp && handsClasped && !legsSpread) return 'O';
 
