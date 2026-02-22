@@ -63,6 +63,8 @@ function flashLetter(letter) {
 
 let lastHoverTarget = null;
 let hoverStartTime = 0;
+let lastActionTarget = null;
+let actionStartTime = 0;
 
 function updateUIFingersAndPool(leftFinger, rightFinger) {
   const now = performance.now();
@@ -174,8 +176,71 @@ function updateUIFingersAndPool(leftFinger, rightFinger) {
     }
   });
 
+  // --- Touch Targets Logic (Buttons & Spawner) ---
+  let currentActionTarget = null;
+  const touchTargets = document.querySelectorAll('.touch-target');
+  
+  touchTargets.forEach(target => {
+    const rect = target.getBoundingClientRect();
+    let isHovered = false;
+    const pad = 15; // padding for easier touch
+
+    for (const f of activeFingers) {
+      if (f.x > rect.left - pad && f.x < rect.right + pad && f.y > rect.top - pad && f.y < rect.bottom + pad) {
+        isHovered = true;
+        break;
+      }
+    }
+
+    const action = target.dataset.action;
+    const fillBg = target.querySelector('.fill-bg');
+    const circle = target.querySelector('circle');
+    const totalLength = 176;
+
+    if (isHovered) {
+      target.classList.add('hovered');
+      currentActionTarget = action;
+
+      if (lastActionTarget === action) {
+        const elapsed = now - actionStartTime;
+        let progress = Math.min(elapsed / CONFIG.HOVER_CONFIRM_MS, 1.0);
+        
+        if (circle) circle.style.strokeDashoffset = totalLength - (progress * totalLength);
+        if (fillBg) fillBg.style.width = (progress * 100) + '%';
+
+        if (progress >= 1.0) {
+          // Trigger Action
+          if (action === 'spawn') spawnPhysicsLetter();
+          else if (action === 'space') recSpace();
+          else if (action === 'backspace') recBackspace();
+          else if (action === 'clear') recClear();
+          else if (action === 'copy') recCopy();
+          
+          target.classList.remove('hovered');
+          target.classList.add('confirmed');
+          setTimeout(() => target.classList.remove('confirmed'), 300);
+          
+          lockoutUntil = now + CONFIG.LOCKOUT_MS;
+          lastActionTarget = null;
+        }
+      } else {
+        lastActionTarget = action;
+        actionStartTime = now;
+        if (circle) circle.style.strokeDashoffset = totalLength;
+        if (fillBg) fillBg.style.width = '0%';
+      }
+    } else {
+      target.classList.remove('hovered');
+      if (circle) circle.style.strokeDashoffset = totalLength;
+      if (fillBg) fillBg.style.width = '0%';
+    }
+  });
+
   if (!currentHoverTarget) {
     lastHoverTarget = null;
+  }
+  if (!currentActionTarget) {
+    lastActionTarget = null;
   }
 }
 

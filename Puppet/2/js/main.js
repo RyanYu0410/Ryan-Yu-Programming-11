@@ -77,6 +77,8 @@ function draw() {
 
   // Process pose
   let hasPose = false;
+  let leftFinger = null, rightFinger = null;
+
   if (latestResults && latestResults.poseLandmarks) {
     const lm = validatePose(latestResults.poseLandmarks);
     if (lm) {
@@ -87,7 +89,6 @@ function draw() {
       maybeRunOCR(smoothedLandmarks);
       
       // Extract finger coordinates
-      let leftFinger = null, rightFinger = null;
       const lIdx = smoothedLandmarks[19];
       const rIdx = smoothedLandmarks[20];
       if (lIdx && lIdx.visibility > CONFIG.MIN_VISIBILITY) leftFinger = lmToScreen(lIdx);
@@ -105,7 +106,109 @@ function draw() {
     updateUIFingersAndPool(null, null); // Hide cursors
   }
 
+  updateAndDrawPhysics(leftFinger, rightFinger);
   updateHUD(hasPose);
+}
+
+/* ================================================================
+   PHYSICS LETTERS
+   ================================================================ */
+let physicsLetters = [];
+
+function spawnPhysicsLetter() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const char = letters[Math.floor(Math.random() * letters.length)];
+  const spawnerBtn = document.querySelector('.spawner-btn');
+  if (!spawnerBtn) return;
+  const spawnerRect = spawnerBtn.getBoundingClientRect();
+  
+  physicsLetters.push({
+    char: char,
+    x: spawnerRect.right + 40,
+    y: spawnerRect.top + spawnerRect.height / 2,
+    vx: Math.random() * 8 + 4, // shoot right
+    vy: Math.random() * -10 - 5, // shoot up
+    radius: 35,
+    collected: false,
+    alpha: 255
+  });
+}
+
+function updateAndDrawPhysics(leftFinger, rightFinger) {
+  for (let i = physicsLetters.length - 1; i >= 0; i--) {
+    let p = physicsLetters[i];
+    
+    if (!p.collected) {
+      p.vy += 0.6; // Gravity
+      p.x += p.vx;
+      p.y += p.vy;
+      
+      // Air damping
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      // Floor bounce
+      if (p.y > height - p.radius - 120) { // bounce above console
+        p.y = height - p.radius - 120;
+        p.vy *= -0.6;
+        p.vx *= 0.8;
+      }
+
+      // Side wall bounce
+      if (p.x > width - p.radius) {
+        p.x = width - p.radius;
+        p.vx *= -0.8;
+      } else if (p.x < p.radius) {
+        p.x = p.radius;
+        p.vx *= -0.8;
+      }
+
+      // Hand collision
+      let hitFinger = null;
+      if (leftFinger && dist(p.x, p.y, leftFinger.x, leftFinger.y) < p.radius + 30) {
+        hitFinger = leftFinger;
+      } else if (rightFinger && dist(p.x, p.y, rightFinger.x, rightFinger.y) < p.radius + 30) {
+        hitFinger = rightFinger;
+      }
+
+      if (hitFinger) {
+        p.vy = -12; // Bounce up
+        p.vx = (p.x - hitFinger.x) * 0.15; // Push away
+        recAppend(p.char); // Add to word immediately
+        p.collected = true; // Mark to fade out
+      }
+    }
+
+    // Draw
+    push();
+    translate(p.x, p.y);
+    if (p.collected) {
+      p.alpha -= 15;
+      if (p.alpha <= 0) {
+        physicsLetters.splice(i, 1);
+        pop();
+        continue;
+      }
+      fill(255, 255, 255, p.alpha * 0.2);
+      stroke(255, p.alpha);
+    } else {
+      fill(255, 255, 255, 30); // Glass look
+      stroke(255, 200);
+    }
+    
+    strokeWeight(2);
+    ellipse(0, 0, p.radius * 2);
+    
+    if (p.collected) fill(255, p.alpha);
+    else fill(255);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textFont('Inter');
+    textStyle(BOLD);
+    textSize(p.radius * 1.2);
+    text(p.char, 0, -2);
+    pop();
+  }
 }
 
 /* ================================================================

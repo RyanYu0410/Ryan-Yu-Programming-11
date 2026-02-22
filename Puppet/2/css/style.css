@@ -220,3 +220,46 @@ canvas#defaultCanvas0 {
   z-index: 50;
   backdrop-filter: blur(10px);
 }
+
+/* ---- Left Spawner ---- */
+.hud-left {
+  position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 16px;
+  pointer-events: none; 
+}
+
+.spawner-btn {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex; justify-content: center; align-items: center;
+  font-size: 28px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  cursor: pointer; pointer-events: all;
+  position: relative;
+  transition: transform 0.2s;
+}
+.spawner-btn:hover, .spawner-btn.hovered { transform: scale(1.1); }
+.spawner-btn.confirmed { transform: scale(0.9); }
+
+/* ---- Button Touch Targets ---- */
+.glass-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1; /* Keep text above fill */
+}
+
+.glass-btn .fill-bg {
+  position: absolute;
+  top: 0; left: 0; height: 100%; width: 0%;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: -1;
+  transition: width 0.1s linear;
+}
+.glass-btn.primary .fill-bg { background: rgba(59, 130, 246, 0.4); }
+.glass-btn.danger .fill-bg { background: rgba(244, 63, 94, 0.4); }
+
+.glass-btn.hovered { border-color: rgba(255, 255, 255, 0.5); }
+.glass-btn.confirmed { transform: scale(0.95); }
