@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pose Letter Recognition (Tesseract OCR)</title>
+<title>Puppet OCR - Modern Glassmorphism</title>
 
 <!-- p5.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
@@ -23,66 +23,74 @@
 
 <div id="app-container">
   <!-- p5 injects canvas here -->
-  <canvas id="ocr-preview" width="200" height="200"></canvas>
 
+  <!-- Modern UI Overlay -->
   <div class="hud">
-    <div class="hud-top-bar">
-      <span class="title">POSE → OCR</span>
+    
+    <!-- Top Nav -->
+    <div class="hud-top-bar glass">
+      <div class="logo">
+        <div class="dot active"></div>
+        <span class="title">Puppet OCR</span>
+      </div>
       <span class="fps" id="fps-display">-- fps</span>
     </div>
 
-    <!-- Recording tape -->
-    <div id="rec-panel">
-      <div id="rec-tape">
-        <div id="rec-tape-label">
-          <span>Recorded</span>
-          <span id="rec-count">0 letters</span>
-          <span class="rec-dot idle" id="rec-dot"></span>
-        </div>
-        <div id="rec-text"><span class="cursor"></span></div>
-        <div id="rec-controls">
-          <button class="rec-btn neutral" onclick="recSpace()">SPACE</button>
-          <button class="rec-btn neutral" onclick="recBackspace()">⌫ DELETE</button>
-          <button class="rec-btn action"  onclick="recCopy()">COPY</button>
-          <button class="rec-btn danger"  onclick="recClear()">CLEAR</button>
-        </div>
-      </div>
+    <!-- Candidate Pool (Floating bubbles) -->
+    <div id="candidate-pool">
+      <!-- Candidates will be injected here by JS -->
     </div>
 
-    <!-- Letter flash -->
-    <div id="rec-flash"></div>
+    <!-- Finger Cursors -->
+    <div id="cursor-left" class="finger-cursor"></div>
+    <div id="cursor-right" class="finger-cursor"></div>
 
+    <!-- Center Messages -->
     <div class="hud-center">
-      <div class="live-letter" id="live-letter"></div>
-      <div class="big-letter" id="big-letter"></div>
       <div class="status-msg warn" id="msg-no-pose">Move into frame</div>
-      <div class="status-msg load" id="msg-loading">Loading OCR engine…</div>
-      <div class="status-msg info" id="msg-scanning">Scanning…</div>
+      <div class="status-msg load" id="msg-loading">Loading OCR Engine...</div>
+      <div class="status-msg info" id="msg-scanning">Scanning Pose...</div>
+      <div id="rec-flash"></div>
     </div>
 
-    <div class="hud-bottom">
-      <div class="label-row">
-        <span class="lbl">OCR Read</span>
-        <span class="val" id="ocr-read-val">—</span>
+    <!-- Bottom Recording Console -->
+    <div class="hud-bottom glass">
+      
+      <div class="record-console">
+        <div class="console-header">
+          <div class="rec-indicator">
+            <div id="rec-dot" class="dot idle"></div>
+            <span>RECORDING</span>
+          </div>
+          <span id="rec-count" class="count-badge">0 CHARS</span>
+        </div>
+        
+        <div class="console-body">
+          <div id="rec-text"><span class="cursor"></span></div>
+        </div>
+
+        <div class="console-actions">
+          <button class="btn glass-btn" onclick="recSpace()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg> SPACE
+          </button>
+          <button class="btn glass-btn" onclick="recBackspace()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg> DEL
+          </button>
+          <button class="btn glass-btn primary" onclick="recCopy()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg> COPY
+          </button>
+          <button class="btn glass-btn danger" onclick="recClear()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg> CLEAR
+          </button>
+        </div>
       </div>
-      <div class="label-row">
-        <span class="lbl">Confidence</span>
-        <span class="val" id="ocr-conf-val">—</span>
-      </div>
-      <div class="label-row">
-        <span class="lbl">Confirmed</span>
-        <span class="val" id="confirmed-val">—</span>
-      </div>
-      <div class="label-row" style="margin-top:2px">
-        <span class="lbl">Stability</span>
-        <span class="val" id="stability-val">0 / —</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progress-fill"></div>
-      </div>
+
     </div>
   </div>
 </div>
+
+<!-- OCR preview (hidden/debug) -->
+<canvas id="ocr-preview" width="160" height="160" style="display:none;"></canvas>
 
 <!-- Scripts (Order matters for dependencies) -->
 <script src="js/config.js"></script>

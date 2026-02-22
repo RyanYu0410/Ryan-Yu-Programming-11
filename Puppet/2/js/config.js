@@ -20,8 +20,9 @@ const CONFIG = {
   OCR_PADDING: 28,            // px padding inside OCR canvas
   OCR_WHITELIST: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
 
-  // Stability gate
-  STABILITY_HITS: 3,          // consecutive OCR reads of same letter to confirm
+  // Pool & Selection
+  POOL_MAX_SIZE: 6,           // Max items in the selection pool
+  HOVER_CONFIRM_MS: 800,      // How long to hover to confirm a letter
   LOCKOUT_MS: 1200,           // hold confirmed letter this long
 
   // Include legs in the OCR drawing (helps X, Y, K, etc.)

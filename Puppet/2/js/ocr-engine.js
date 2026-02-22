@@ -99,32 +99,17 @@ function maybeRunOCR(lms) {
       ocrLetter = null;
     }
 
-    // Set global candidates for finger selection menu (max 3 choices)
-    // Only show menu if there's ambiguity (more than 1 choice) or OCR disagrees with intent
-    if (cands.length > 1) {
-      ocrCandidates = cands.slice(0, 4); // Show up to 4 choices
-    } else {
-      ocrCandidates = [];
+    // Accumulate unique letters into the candidate pool
+    for (const char of cands) {
+      if (!ocrCandidates.includes(char)) {
+        ocrCandidates.push(char);
+      }
+    }
+    // Keep pool size manageable
+    while (ocrCandidates.length > CONFIG.POOL_MAX_SIZE) {
+      ocrCandidates.shift(); 
     }
 
-    // --- Stability gate ---
-    const gateNow = performance.now();
-    if (gateNow < lockoutUntil) {
-      stabilityCount = CONFIG.STABILITY_HITS;
-      return;
-    }
-
-    if (ocrLetter && ocrLetter === stableCandidate) {
-      stabilityCount = Math.min(stabilityCount + 1, CONFIG.STABILITY_HITS);
-    } else {
-      stableCandidate = ocrLetter;
-      stabilityCount = ocrLetter ? 1 : 0;
-    }
-
-    if (stabilityCount >= CONFIG.STABILITY_HITS && stableCandidate) {
-      confirmed = stableCandidate;
-      lockoutUntil = gateNow + CONFIG.LOCKOUT_MS;
-    }
   }).catch((err) => {
     ocrBusy = false;
     console.error('OCR error:', err);
