@@ -172,12 +172,27 @@ canvas#defaultCanvas0 {
 .count-badge { background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 10px; }
 
 .console-body {
+  position: relative;
   min-height: 50px;
   font-size: 32px; font-weight: 900; color: #fff; letter-spacing: 6px;
   word-break: break-all; line-height: 1.2;
   display: flex; align-items: center;
   text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  padding: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 1;
 }
+
+.console-body .fill-bg {
+  position: absolute;
+  top: 0; left: 0; height: 100%; width: 0%;
+  background: rgba(16, 185, 129, 0.3);
+  z-index: -1;
+  transition: width 0.1s linear;
+}
+
+.console-body.hovered { border: 1px solid rgba(16, 185, 129, 0.5); }
 
 .console-body .cursor {
   display: inline-block; width: 4px; height: 36px;

@@ -21,7 +21,7 @@ const CONFIG = {
   OCR_WHITELIST: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
 
   // Pool & Selection
-  POOL_MAX_SIZE: 6,           // Max items in the selection pool
+  POOL_MAX_SIZE: 8,           // Max items in the selection pool
   HOVER_CONFIRM_MS: 800,      // How long to hover to confirm a letter
   LOCKOUT_MS: 1200,           // hold confirmed letter this long
 
@@ -50,7 +50,7 @@ let ocrLetter = null;          // latest single-char result
 let ocrConfidence = 0;         // 0-100
 let ocrRawText = '';
 let currentIntent = null;      // Extracted from pose rules
-let ocrCandidates = [];        // Top choices for finger selection
+let ocrCandidates = ['Y','O','U','R','N','A','M','E']; // Top choices for finger selection
 
 // Finger Selection UI
 let hoverLetter = null;

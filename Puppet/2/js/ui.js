@@ -1,26 +1,79 @@
 /* ================================================================
    RECORDING & TAPE MANAGEMENT
    ================================================================ */
+let isGreeting = false;
+let scrambleTimer = null;
+
+function clearGreeting() {
+  if (isGreeting) {
+    isGreeting = false;
+    clearInterval(scrambleTimer);
+    renderRecTape();
+  }
+}
 
 function recAppend(letter) {
+  clearGreeting();
   recLetters.push(letter);
   renderRecTape();
   flashLetter(letter);
 }
 
-function recSpace()     { recLetters.push(' '); renderRecTape(); }
-function recBackspace() { recLetters.pop();      renderRecTape(); }
-function recClear()     { recLetters = [];       renderRecTape(); }
+function recSpace()     { clearGreeting(); recLetters.push(' '); renderRecTape(); }
+function recBackspace() { clearGreeting(); recLetters.pop();      renderRecTape(); }
+function recClear()     { clearGreeting(); recLetters = [];       renderRecTape(); }
 
 function recCopy() {
   const text = recLetters.join('');
   if (!text) return;
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.glass-btn.primary');
+    if (!btn) return;
     const orig = btn.innerHTML;
     btn.innerHTML = 'COPIED ✓';
     setTimeout(() => { btn.innerHTML = orig; }, 1200);
   });
+}
+
+function triggerGreeting() {
+  if (isGreeting) return; // already greeting
+  isGreeting = true;
+  
+  const name = recLetters.join('').trim() || 'FRIEND';
+  const targetText = `HI! ${name}`;
+  
+  // Confetti explosion everywhere
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      if (typeof spawnConfetti === 'function') {
+        spawnConfetti(windowWidth/2 + (Math.random()*400-200), windowHeight/2 + (Math.random()*200-100));
+      }
+    }, i * 200);
+  }
+  
+  const el = document.getElementById('rec-text');
+  let iter = 0;
+  const maxIter = 20;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()';
+  
+  clearInterval(scrambleTimer);
+  scrambleTimer = setInterval(() => {
+    let current = '';
+    for (let i = 0; i < targetText.length; i++) {
+      if (iter > maxIter * (i / targetText.length)) {
+        current += targetText[i] === ' ' ? '<span class="space-mark">·</span>' : targetText[i];
+      } else {
+        current += chars[Math.floor(Math.random() * chars.length)];
+      }
+    }
+    el.innerHTML = current + '<span class="cursor"></span>';
+    
+    iter++;
+    if (iter > maxIter + 5) {
+      clearInterval(scrambleTimer);
+      el.innerHTML = targetText.split('').map(c => c === ' ' ? '<span class="space-mark">·</span>' : c).join('') + '<span class="cursor"></span>';
+    }
+  }, 40);
 }
 
 document.addEventListener('keydown', (e) => {
@@ -30,6 +83,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 function renderRecTape() {
+  if (isGreeting) return; // Don't overwrite if greeting animation is playing
+  
   const el = document.getElementById('rec-text');
   let html = '';
   for (const ch of recLetters) {
@@ -223,6 +278,7 @@ function updateUIFingersAndPool(leftFinger, rightFinger) {
             else if (action === 'backspace') recBackspace();
             else if (action === 'clear') recClear();
             else if (action === 'copy') recCopy();
+            else if (action === 'greet') triggerGreeting();
             
             target.classList.remove('hovered');
             target.classList.add('confirmed');
