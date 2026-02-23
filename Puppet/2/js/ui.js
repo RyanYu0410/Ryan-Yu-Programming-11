@@ -42,6 +42,9 @@ function triggerGreeting() {
   const name = recLetters.join('').trim() || 'FRIEND';
   const targetText = `HI! ${name}`;
   
+  // Update candidate pool to targetText
+  ocrCandidates = targetText.split('');
+  
   // Confetti explosion everywhere
   for (let i = 0; i < 5; i++) {
     setTimeout(() => {
@@ -72,6 +75,15 @@ function triggerGreeting() {
     if (iter > maxIter + 5) {
       clearInterval(scrambleTimer);
       el.innerHTML = targetText.split('').map(c => c === ' ' ? '<span class="space-mark">·</span>' : c).join('') + '<span class="cursor"></span>';
+      
+      // Make pool cards dance
+      const cards = document.querySelectorAll('.candidate-card');
+      cards.forEach((card, idx) => {
+        setTimeout(() => {
+          card.classList.add('dance');
+          setTimeout(() => card.classList.remove('dance'), 1000);
+        }, idx * 100);
+      });
     }
   }, 40);
 }
