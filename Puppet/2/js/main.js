@@ -270,6 +270,13 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
       }
 
       if (hitFinger) {
+        // Stop fading if touched and reset the disappear timer
+        if (p.fadingOut) {
+          p.fadingOut = false;
+          p.alpha = 255;
+        }
+        p.spawnTime = performance.now();
+
         p.catchProgress += (deltaTime || 16) / 800; // takes ~800ms to catch
         if (p.catchProgress >= 1.0) {
           p.vy = -12; // Bounce up
@@ -287,8 +294,8 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
         if (p.catchProgress > 0) p.catchProgress = Math.max(0, p.catchProgress - 0.05);
       }
 
-      // Auto-disappear after 5s
-      if (!p.fadingOut && performance.now() - p.spawnTime > 5000) {
+      // Auto-disappear after 8s
+      if (!p.fadingOut && performance.now() - p.spawnTime > 8000) {
         p.fadingOut = true;
       }
     }
