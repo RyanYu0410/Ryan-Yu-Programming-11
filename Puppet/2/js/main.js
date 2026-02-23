@@ -189,7 +189,8 @@ function spawnPhysicsLetter() {
     vy: Math.random() * -20 - 5, // spray up
     radius: 35,
     collected: false,
-    alpha: 255
+    alpha: 255,
+    catchProgress: 0
   });
 }
 
@@ -201,6 +202,42 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
       p.vy += 0.6; // Gravity
       p.x += p.vx;
       p.y += p.vy;
+      
+      // Letter to letter collision
+      for (let j = 0; j < physicsLetters.length; j++) {
+        if (i !== j && !physicsLetters[j].collected) {
+          let p2 = physicsLetters[j];
+          let dx = p.x - p2.x;
+          let dy = p.y - p2.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          let minDist = p.radius + p2.radius;
+          
+          if (distance < minDist && distance > 0) {
+            let overlap = minDist - distance;
+            let nx = dx / distance;
+            let ny = dy / distance;
+            
+            // Push apart
+            p.x += nx * overlap * 0.5;
+            p.y += ny * overlap * 0.5;
+            p2.x -= nx * overlap * 0.5;
+            p2.y -= ny * overlap * 0.5;
+            
+            // Exchange velocity
+            let dvx = p.vx - p2.vx;
+            let dvy = p.vy - p2.vy;
+            let dot = dvx * nx + dvy * ny;
+            if (dot < 0) { // moving towards each other
+              let restitution = 0.8;
+              let impulse = -(1 + restitution) * dot / 2;
+              p.vx += impulse * nx;
+              p.vy += impulse * ny;
+              p2.vx -= impulse * nx;
+              p2.vy -= impulse * ny;
+            }
+          }
+        }
+      }
       
       // Air damping
       p.vx *= 0.99;
@@ -231,16 +268,21 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
       }
 
       if (hitFinger) {
-        p.vy = -12; // Bounce up
-        p.vx = (p.x - hitFinger.x) * 0.15; // Push away
-        
-        // Add to text immediately
-        recAppend(p.char);
-        
-        // Spawn confetti upon catch
-        spawnConfetti(p.x, p.y);
-        
-        p.collected = true; // Mark to fade out
+        p.catchProgress += (deltaTime || 16) / 800; // takes ~800ms to catch
+        if (p.catchProgress >= 1.0) {
+          p.vy = -12; // Bounce up
+          p.vx = (p.x - hitFinger.x) * 0.15; // Push away
+          
+          // Add to text immediately
+          recAppend(p.char);
+          
+          // Spawn confetti upon catch
+          spawnConfetti(p.x, p.y);
+          
+          p.collected = true; // Mark to fade out
+        }
+      } else {
+        if (p.catchProgress > 0) p.catchProgress = Math.max(0, p.catchProgress - 0.05);
       }
     }
 
@@ -263,6 +305,13 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
     
     strokeWeight(2);
     ellipse(0, 0, p.radius * 2);
+    
+    if (!p.collected && p.catchProgress > 0) {
+      stroke(16, 185, 129, 200); // Green progress ring
+      strokeWeight(4);
+      noFill();
+      arc(0, 0, p.radius * 2 + 8, p.radius * 2 + 8, -HALF_PI, -HALF_PI + TWO_PI * p.catchProgress);
+    }
     
     if (p.collected) fill(255, p.alpha);
     else fill(255);
