@@ -45,18 +45,18 @@ function triggerGreeting() {
   // Update candidate pool to targetText
   ocrCandidates = targetText.split('');
   
-  // Confetti explosion everywhere
-  for (let i = 0; i < 5; i++) {
+  // Confetti explosion over 5 seconds
+  for (let i = 0; i < 15; i++) {
     setTimeout(() => {
       if (typeof spawnConfetti === 'function') {
         spawnConfetti(windowWidth/2 + (Math.random()*400-200), windowHeight/2 + (Math.random()*200-100));
       }
-    }, i * 200);
+    }, i * 300);
   }
   
   const el = document.getElementById('rec-text');
   let iter = 0;
-  const maxIter = 20;
+  const maxIter = 125; // 5 seconds at 40ms per iter
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()';
   
   clearInterval(scrambleTimer);
