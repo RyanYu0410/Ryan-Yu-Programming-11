@@ -187,7 +187,7 @@ function spawnPhysicsLetter() {
     y: startY,
     vx: Math.random() * 15 + 10, // spray out fast to the right
     vy: Math.random() * -20 - 5, // spray up
-    radius: 35,
+    radius: 50, // larger bubble
     collected: false,
     alpha: 255,
     catchProgress: 0,
@@ -338,7 +338,7 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
     textAlign(CENTER, CENTER);
     textFont('Inter');
     textStyle(BOLD);
-    textSize(p.radius * 1.2);
+    textSize(p.radius * 0.8); // smaller font size relative to bubble
     text(p.char, 0, -2);
     pop();
   }
