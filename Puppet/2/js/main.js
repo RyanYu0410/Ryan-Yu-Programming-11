@@ -190,7 +190,9 @@ function spawnPhysicsLetter() {
     radius: 35,
     collected: false,
     alpha: 255,
-    catchProgress: 0
+    catchProgress: 0,
+    spawnTime: performance.now(),
+    fadingOut: false
   });
 }
 
@@ -284,20 +286,30 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
       } else {
         if (p.catchProgress > 0) p.catchProgress = Math.max(0, p.catchProgress - 0.05);
       }
+
+      // Auto-disappear after 5s
+      if (!p.fadingOut && performance.now() - p.spawnTime > 5000) {
+        p.fadingOut = true;
+      }
     }
 
     // Draw
     push();
     translate(p.x, p.y);
-    if (p.collected) {
+    if (p.collected || p.fadingOut) {
       p.alpha -= 15;
       if (p.alpha <= 0) {
         physicsLetters.splice(i, 1);
         pop();
         continue;
       }
-      fill(255, 255, 255, p.alpha * 0.2);
-      stroke(255, p.alpha);
+      if (p.collected) {
+        fill(255, 255, 255, p.alpha * 0.2);
+        stroke(255, p.alpha);
+      } else {
+        fill(255, 255, 255, (p.alpha / 255) * 30);
+        stroke(255, (p.alpha / 255) * 200);
+      }
     } else {
       fill(255, 255, 255, 30); // Glass look
       stroke(255, 200);
@@ -306,14 +318,14 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
     strokeWeight(2);
     ellipse(0, 0, p.radius * 2);
     
-    if (!p.collected && p.catchProgress > 0) {
+    if (!p.collected && !p.fadingOut && p.catchProgress > 0) {
       stroke(16, 185, 129, 200); // Green progress ring
       strokeWeight(4);
       noFill();
       arc(0, 0, p.radius * 2 + 8, p.radius * 2 + 8, -HALF_PI, -HALF_PI + TWO_PI * p.catchProgress);
     }
     
-    if (p.collected) fill(255, p.alpha);
+    if (p.collected || p.fadingOut) fill(255, p.alpha);
     else fill(255);
     noStroke();
     textAlign(CENTER, CENTER);
