@@ -119,15 +119,21 @@ function spawnPhysicsLetter() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const char = letters[Math.floor(Math.random() * letters.length)];
   const spawnerBtn = document.querySelector('.spawner-btn');
-  if (!spawnerBtn) return;
-  const spawnerRect = spawnerBtn.getBoundingClientRect();
+  let startX = 64;
+  let startY = height / 2;
+  
+  if (spawnerBtn) {
+    const spawnerRect = spawnerBtn.getBoundingClientRect();
+    startX = spawnerRect.right;
+    startY = spawnerRect.top + spawnerRect.height / 2;
+  }
   
   physicsLetters.push({
     char: char,
-    x: spawnerRect.right + 40,
-    y: spawnerRect.top + spawnerRect.height / 2,
-    vx: Math.random() * 8 + 4, // shoot right
-    vy: Math.random() * -10 - 5, // shoot up
+    x: startX + 20,
+    y: startY,
+    vx: Math.random() * 15 + 10, // spray out fast to the right
+    vy: Math.random() * -20 - 5, // spray up
     radius: 35,
     collected: false,
     alpha: 255
@@ -174,7 +180,15 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
       if (hitFinger) {
         p.vy = -12; // Bounce up
         p.vx = (p.x - hitFinger.x) * 0.15; // Push away
-        recAppend(p.char); // Add to word immediately
+        
+        // Add to candidate pool instead of directly to text
+        if (!ocrCandidates.includes(p.char)) {
+          ocrCandidates.push(p.char);
+        }
+        while (ocrCandidates.length > CONFIG.POOL_MAX_SIZE) {
+          ocrCandidates.shift();
+        }
+        
         p.collected = true; // Mark to fade out
       }
     }

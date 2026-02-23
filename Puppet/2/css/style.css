@@ -221,45 +221,60 @@ canvas#defaultCanvas0 {
   backdrop-filter: blur(10px);
 }
 
-/* ---- Left Spawner ---- */
+/* ---- Side Spawner and Actions ---- */
 .hud-left {
-  position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
   display: flex; flex-direction: column; gap: 16px;
   pointer-events: none; 
 }
+.hud-right {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 16px;
+  pointer-events: none;
+}
 
-.spawner-btn {
+.side-btn {
   width: 64px; height: 64px;
-  border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex; justify-content: center; align-items: center;
-  font-size: 28px;
+  font-size: 28px; color: #fff;
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   cursor: pointer; pointer-events: all;
   position: relative;
-  transition: transform 0.2s;
-}
-.spawner-btn:hover, .spawner-btn.hovered { transform: scale(1.1); }
-.spawner-btn.confirmed { transform: scale(0.9); }
-
-/* ---- Button Touch Targets ---- */
-.glass-btn {
-  position: relative;
+  transition: transform 0.2s, background 0.2s;
   overflow: hidden;
-  z-index: 1; /* Keep text above fill */
+  z-index: 1;
 }
 
-.glass-btn .fill-bg {
+.left-side-btn {
+  border-radius: 0 32px 32px 0;
+  border-left: none;
+}
+.right-side-btn {
+  border-radius: 32px 0 0 32px;
+  border-right: none;
+}
+
+.side-btn:hover, .side-btn.hovered { background: rgba(255, 255, 255, 0.2); border-color: rgba(255,255,255,0.4); }
+.side-btn.confirmed { transform: scale(0.9); }
+
+.left-side-btn:hover, .left-side-btn.hovered { transform: translateX(8px); }
+.right-side-btn:hover, .right-side-btn.hovered { transform: translateX(-8px); }
+
+.side-btn .fill-bg {
   position: absolute;
-  top: 0; left: 0; height: 100%; width: 0%;
+  top: 0; right: 0; height: 100%; width: 0%;
   background: rgba(255, 255, 255, 0.2);
   z-index: -1;
   transition: width 0.1s linear;
 }
-.glass-btn.primary .fill-bg { background: rgba(59, 130, 246, 0.4); }
-.glass-btn.danger .fill-bg { background: rgba(244, 63, 94, 0.4); }
 
-.glass-btn.hovered { border-color: rgba(255, 255, 255, 0.5); }
-.glass-btn.confirmed { transform: scale(0.95); }
+.left-side-btn .fill-bg { left: 0; right: auto; }
+
+.side-btn.del-btn .fill-bg { background: rgba(244, 63, 94, 0.4); color: #fb7185; }
+.side-btn.clear-btn .fill-bg { background: rgba(244, 63, 94, 0.6); }
+.side-btn.space-btn .fill-bg { background: rgba(59, 130, 246, 0.4); color: #60a5fa; }
+.side-btn.del-btn, .side-btn.clear-btn { color: #fb7185; }
+.side-btn.space-btn { color: #60a5fa; }
