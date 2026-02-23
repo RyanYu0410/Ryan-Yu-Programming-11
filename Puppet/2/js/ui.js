@@ -201,33 +201,42 @@ function updateUIFingersAndPool(leftFinger, rightFinger) {
       target.classList.add('hovered');
       currentActionTarget = action;
 
-      if (lastActionTarget === action) {
-        const elapsed = now - actionStartTime;
-        let progress = Math.min(elapsed / CONFIG.HOVER_CONFIRM_MS, 1.0);
-        
-        if (circle) circle.style.strokeDashoffset = totalLength - (progress * totalLength);
-        if (fillBg) fillBg.style.width = (progress * 100) + '%';
-
-        if (progress >= 1.0) {
-          // Trigger Action
-          if (action === 'spawn') spawnPhysicsLetter();
-          else if (action === 'space') recSpace();
-          else if (action === 'backspace') recBackspace();
-          else if (action === 'clear') recClear();
-          else if (action === 'copy') recCopy();
-          
-          target.classList.remove('hovered');
-          target.classList.add('confirmed');
-          setTimeout(() => target.classList.remove('confirmed'), 300);
-          
-          lockoutUntil = now + CONFIG.LOCKOUT_MS;
-          lastActionTarget = null;
+      if (action === 'spawn') {
+        // Continuous spawn
+        if (typeof window.lastSpawnTime === 'undefined') window.lastSpawnTime = 0;
+        if (now - window.lastSpawnTime > 100) { // spawn every 100ms
+          spawnPhysicsLetter();
+          window.lastSpawnTime = now;
         }
+        if (circle) circle.style.strokeDashoffset = 0;
       } else {
-        lastActionTarget = action;
-        actionStartTime = now;
-        if (circle) circle.style.strokeDashoffset = totalLength;
-        if (fillBg) fillBg.style.width = '0%';
+        if (lastActionTarget === action) {
+          const elapsed = now - actionStartTime;
+          let progress = Math.min(elapsed / CONFIG.HOVER_CONFIRM_MS, 1.0);
+          
+          if (circle) circle.style.strokeDashoffset = totalLength - (progress * totalLength);
+          if (fillBg) fillBg.style.width = (progress * 100) + '%';
+
+          if (progress >= 1.0) {
+            // Trigger Action
+            if (action === 'space') recSpace();
+            else if (action === 'backspace') recBackspace();
+            else if (action === 'clear') recClear();
+            else if (action === 'copy') recCopy();
+            
+            target.classList.remove('hovered');
+            target.classList.add('confirmed');
+            setTimeout(() => target.classList.remove('confirmed'), 300);
+            
+            lockoutUntil = now + CONFIG.LOCKOUT_MS;
+            lastActionTarget = null;
+          }
+        } else {
+          lastActionTarget = action;
+          actionStartTime = now;
+          if (circle) circle.style.strokeDashoffset = totalLength;
+          if (fillBg) fillBg.style.width = '0%';
+        }
       }
     } else {
       target.classList.remove('hovered');

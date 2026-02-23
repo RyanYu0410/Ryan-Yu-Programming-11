@@ -107,13 +107,63 @@ function draw() {
   }
 
   updateAndDrawPhysics(leftFinger, rightFinger);
+  updateAndDrawConfetti();
   updateHUD(hasPose);
 }
 
 /* ================================================================
-   PHYSICS LETTERS
+   PHYSICS LETTERS & CONFETTI
    ================================================================ */
 let physicsLetters = [];
+let confettiParticles = [];
+
+function spawnConfetti(x, y) {
+  const colors = [
+    [244, 63, 94],  // rose
+    [59, 130, 246], // blue
+    [16, 185, 129], // emerald
+    [234, 179, 8],  // yellow
+    [168, 85, 247]  // purple
+  ];
+  for (let i = 0; i < 30; i++) {
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    confettiParticles.push({
+      x: x,
+      y: y,
+      vx: Math.random() * 16 - 8,
+      vy: Math.random() * -15 - 5,
+      r: c[0], g: c[1], b: c[2],
+      size: Math.random() * 10 + 6,
+      life: 255,
+      rot: Math.random() * 360,
+      vrot: Math.random() * 20 - 10
+    });
+  }
+}
+
+function updateAndDrawConfetti() {
+  for (let i = confettiParticles.length - 1; i >= 0; i--) {
+    let p = confettiParticles[i];
+    p.vy += 0.5; // gravity
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vrot;
+    p.life -= 4;
+    
+    if (p.life <= 0) {
+      confettiParticles.splice(i, 1);
+    } else {
+      push();
+      translate(p.x, p.y);
+      rotate(radians(p.rot));
+      noStroke();
+      fill(p.r, p.g, p.b, p.life);
+      rectMode(CENTER);
+      rect(0, 0, p.size, p.size * 0.6);
+      pop();
+    }
+  }
+}
 
 function spawnPhysicsLetter() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -127,6 +177,9 @@ function spawnPhysicsLetter() {
     startX = spawnerRect.right;
     startY = spawnerRect.top + spawnerRect.height / 2;
   }
+  
+  // Confetti at spawn point
+  spawnConfetti(startX, startY);
   
   physicsLetters.push({
     char: char,
@@ -181,13 +234,11 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
         p.vy = -12; // Bounce up
         p.vx = (p.x - hitFinger.x) * 0.15; // Push away
         
-        // Add to candidate pool instead of directly to text
-        if (!ocrCandidates.includes(p.char)) {
-          ocrCandidates.push(p.char);
-        }
-        while (ocrCandidates.length > CONFIG.POOL_MAX_SIZE) {
-          ocrCandidates.shift();
-        }
+        // Add to text immediately
+        recAppend(p.char);
+        
+        // Spawn confetti upon catch
+        spawnConfetti(p.x, p.y);
         
         p.collected = true; // Mark to fade out
       }
