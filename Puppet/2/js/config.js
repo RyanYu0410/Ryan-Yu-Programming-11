@@ -22,7 +22,7 @@ const CONFIG = {
 
   // Pool & Selection
   POOL_MAX_SIZE: 8,           // Max items in the selection pool
-  HOVER_CONFIRM_MS: 2500,     // How long to hover to confirm a letter
+  HOVER_CONFIRM_MS: 5000,     // How long to hover to confirm a letter
   LOCKOUT_MS: 1200,           // hold confirmed letter this long
 
   // Include legs in the OCR drawing (helps X, Y, K, etc.)
