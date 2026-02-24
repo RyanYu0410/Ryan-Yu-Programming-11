@@ -277,7 +277,7 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
         }
         p.spawnTime = performance.now();
 
-        p.catchProgress += (deltaTime || 16) / 800; // takes ~800ms to catch
+        p.catchProgress += (deltaTime || 16) / CONFIG.HOVER_CONFIRM_MS;
         if (p.catchProgress >= 1.0) {
           p.vy = -12; // Bounce up
           p.vx = (p.x - hitFinger.x) * 0.15; // Push away
@@ -291,7 +291,7 @@ function updateAndDrawPhysics(leftFinger, rightFinger) {
           p.collected = true; // Mark to fade out
         }
       } else {
-        if (p.catchProgress > 0) p.catchProgress = Math.max(0, p.catchProgress - 0.05);
+        if (p.catchProgress > 0) p.catchProgress = Math.max(0, p.catchProgress - ((deltaTime || 16) / 500)); // drain over 500ms
       }
 
       // Auto-disappear after 8s
