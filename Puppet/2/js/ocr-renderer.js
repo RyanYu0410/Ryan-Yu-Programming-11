@@ -62,7 +62,7 @@ function detectIntent(pts, shoulderW, torsoH) {
 
   // D: Right hand on hip, left arm straight down (or hidden)
   if (rightHandOnHip && (!leftHand || leftHand.y > pts['pelvis'].y)) {
-    if (!legsSpread) return 'D';
+    if (!legsSpread && !rightLegOut && !rightLegLifted) return 'D';
   }
 
   // E: Curled up in a ball (squatting down)
@@ -83,10 +83,10 @@ function detectIntent(pts, shoulderW, torsoH) {
   if (bothHandsUp && handsClasped && !legsSpread) return 'O';
 
   // P: Right hand on neck, left arm down/idle, legs together
-  if (rightHandOnNeck && (!leftHand || leftHand.y > pts['pelvis'].y) && !legsSpread && !rightLegOut) return 'P';
+  if (rightHandOnNeck && (!leftHand || leftHand.y > pts['pelvis'].y) && !legsSpread && !rightLegOut && !rightLegLifted) return 'P';
 
-  // R: Right hand on neck, right leg kicked out
-  if (rightHandOnNeck && rightLegOut) return 'R';
+  // R: Right hand on neck (or hip), right leg kicked out (or lifted)
+  if ((rightHandOnNeck || rightHandOnHip) && (rightLegOut || rightLegLifted)) return 'R';
 
   // K: Left arm straight up, right arm up-right, right leg down-right
   if (leftHand && leftHand.y < pts['neck'].y && Math.abs(leftHand.x - pts['neck'].x) < shoulderW * 0.5) {
